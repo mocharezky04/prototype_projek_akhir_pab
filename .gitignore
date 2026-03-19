@@ -51,6 +51,7 @@ android/key.properties
 android/keystore/*.jks
 android/.gradle/
 android/local.properties
+pertemuan4_cart.md
 
 # iOS
 ios/Pods/
