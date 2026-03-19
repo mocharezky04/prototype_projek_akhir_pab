@@ -102,7 +102,7 @@ tanpa mengekspos `service_role` key ke client.
 
 **1. Clone repository**
 ```bash
-git clone https://github.com/<username>/projek_akhir_pab.git
+git clone https://github.com/mocharezky04/projek_akhir_pab.git
 cd projek_akhir_pab
 ```
 
