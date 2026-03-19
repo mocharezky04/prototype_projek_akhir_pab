@@ -1,4 +1,12 @@
--- BANGJUN SPOT schema (run in Supabase SQL editor)
+-- ============================================================
+-- RUN ALL (1 FILE)
+-- Pastikan user admin@bangjun.id dan kasir@bangjun.id
+-- SUDAH dibuat di Supabase Auth sebelum menjalankan file ini.
+-- ============================================================
+
+-- ============================================================
+-- A. SCHEMA (tables + RLS)
+-- ============================================================
 
 create table if not exists profiles (
   id uuid primary key references auth.users on delete cascade,
@@ -17,7 +25,6 @@ create table if not exists products (
   created_at timestamptz default now()
 );
 
--- ensure column exists for existing DB
 alter table products add column if not exists category text;
 
 create table if not exists stock_movements (
@@ -54,9 +61,12 @@ create or replace function is_admin() returns boolean as $$
   select exists(
     select 1 from profiles where id = auth.uid() and role = 'admin'
   );
-$$ language sql stable;
+$$ language sql stable security definer;
 
--- drop policies if they already exist (idempotent)
+-- ============================================================
+-- B. POLICIES (drop + create to be idempotent)
+-- ============================================================
+
 drop policy if exists "profiles read" on profiles;
 drop policy if exists "profiles insert" on profiles;
 drop policy if exists "profiles update" on profiles;
@@ -65,6 +75,7 @@ drop policy if exists "products read" on products;
 drop policy if exists "products admin" on products;
 
 drop policy if exists "stock admin" on stock_movements;
+drop policy if exists "stock read authenticated" on stock_movements;
 
 drop policy if exists "transactions insert" on transactions;
 drop policy if exists "transactions read" on transactions;
@@ -72,7 +83,6 @@ drop policy if exists "transactions read" on transactions;
 drop policy if exists "transaction_items insert" on transaction_items;
 drop policy if exists "transaction_items read" on transaction_items;
 
--- profiles
 create policy "profiles read" on profiles for select
   using (auth.uid() = id or is_admin());
 create policy "profiles insert" on profiles for insert
@@ -80,29 +90,37 @@ create policy "profiles insert" on profiles for insert
 create policy "profiles update" on profiles for update
   using (is_admin()) with check (is_admin());
 
--- products
 create policy "products read" on products for select
   using (auth.uid() is not null);
 create policy "products admin" on products for all
   using (is_admin()) with check (is_admin());
 
--- stock_movements
 create policy "stock admin" on stock_movements for all
   using (is_admin()) with check (is_admin());
+create policy "stock read authenticated" on stock_movements for select
+  using (auth.uid() is not null);
 
--- transactions
 create policy "transactions insert" on transactions for insert
   with check (auth.uid() = cashier_id);
 create policy "transactions read" on transactions for select
   using (is_admin() or cashier_id = auth.uid());
 
--- transaction_items
 create policy "transaction_items insert" on transaction_items for insert
   with check (auth.uid() is not null);
 create policy "transaction_items read" on transaction_items for select
-  using (is_admin());
+  using (
+    is_admin()
+    or exists (
+      select 1 from transactions t
+      where t.id = transaction_id
+        and t.cashier_id = auth.uid()
+    )
+  );
 
--- Seed products (optional)
+-- ============================================================
+-- C. SEED MENU (idempotent)
+-- ============================================================
+
 insert into products (name, category, price, image_url, is_active)
 select 'Nasi Ayam Katsu', 'Aneka Ayam', 15000, null, true
 where not exists (select 1 from products where name = 'Nasi Ayam Katsu');
@@ -178,3 +196,56 @@ where not exists (select 1 from products where name = 'Kopi Hitam / Cappuccino')
 insert into products (name, category, price, image_url, is_active)
 select 'Air Mineral', 'Minuman', 3000, null, true
 where not exists (select 1 from products where name = 'Air Mineral');
+
+-- ============================================================
+-- D. SETUP USERS (profiles roles)
+-- ============================================================
+
+insert into profiles (id, email, role)
+select
+  au.id,
+  au.email,
+  'admin'
+from auth.users au
+where au.email = 'admin@bangjun.id'
+  and not exists (
+    select 1 from profiles p where p.id = au.id
+  );
+
+update profiles
+set role = 'admin'
+where email = 'admin@bangjun.id'
+  and role != 'admin';
+
+insert into profiles (id, email, role)
+select
+  au.id,
+  au.email,
+  'kasir'
+from auth.users au
+where au.email = 'kasir@bangjun.id'
+  and not exists (
+    select 1 from profiles p where p.id = au.id
+  );
+
+update profiles
+set role = 'kasir'
+where email = 'kasir@bangjun.id'
+  and role != 'kasir';
+
+-- ============================================================
+-- E. VERIFIKASI
+-- ============================================================
+
+select
+  au.email,
+  p.role,
+  p.created_at,
+  case
+    when p.id is null then 'BELUM ADA DI PROFILES'
+    else 'OK'
+  end as status
+from auth.users au
+left join profiles p on p.id = au.id
+where au.email in ('admin@bangjun.id', 'kasir@bangjun.id')
+order by au.email;
