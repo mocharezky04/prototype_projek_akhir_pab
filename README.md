@@ -17,9 +17,14 @@ Prototype aplikasi Flutter untuk BangJun.
    - Isi nilai `SUPABASE_URL` dan `SUPABASE_ANON_KEY`
 3. Setup database Supabase (1 file):
    - Buat dulu user di Supabase Auth:
-     - `admin@bangjun.id`
-     - `kasir@bangjun.id`
-   - Jalankan `supabase/run_all.sql` di Supabase SQL Editor
+     1. Buka Supabase Dashboard → **Authentication → Users**
+     2. Klik **Add user**
+     3. Buat `admin@bangjun.id` + password (centang **Auto Confirm User**)
+     4. Ulangi untuk `kasir@bangjun.id`
+   - Jalankan `supabase/run_all.sql` di Supabase SQL Editor:
+     1. Buka Supabase Dashboard → **SQL Editor**
+     2. Create new query, paste isi `supabase/run_all.sql`
+     3. Klik **Run**
 
 ## Menjalankan
 - Android: `flutter run` / `flutter build apk`
