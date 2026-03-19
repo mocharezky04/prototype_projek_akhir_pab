@@ -102,7 +102,7 @@ tanpa mengekspos `service_role` key ke client.
 
 **1. Clone repository**
 ```bash
-git clone https://github.com/mocharezky04/projek_akhir_pab.git
+git clone https://github.com/mocharezky04/prototype_projek_akhir_pab.git
 cd projek_akhir_pab
 ```
 
@@ -143,6 +143,10 @@ Build APK:
 ```bash
 flutter build apk --release
 ```
+
+### Catatan Edge Function
+Setelah deploy `create-user`, pastikan **Verify JWT = OFF** di:
+Supabase Dashboard → Edge Functions → create-user → Settings.
 
 ### Akun Demo
 

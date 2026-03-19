@@ -59,9 +59,15 @@ class AuthProvider extends ChangeNotifier {
     required String role,
   }) async {
     try {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session == null) {
+        return 'Sesi tidak ditemukan, silakan login ulang';
+      }
+
       final response = await Supabase.instance.client.functions.invoke(
         'create-user',
         body: {'email': email, 'password': password, 'role': role},
+        headers: {'Authorization': 'Bearer ${session.accessToken}'},
       );
 
       final data = response.data as Map<String, dynamic>?;
@@ -97,7 +103,21 @@ class AuthProvider extends ChangeNotifier {
 
   Future<String?> deleteUser(String userId) async {
     try {
-      await Supabase.instance.client.from('profiles').delete().eq('id', userId);
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session == null) return 'Sesi tidak ditemukan';
+
+      final response = await Supabase.instance.client.functions.invoke(
+        'create-user',
+        method: HttpMethod.delete,
+        body: {'userId': userId},
+        headers: {'Authorization': 'Bearer ${session.accessToken}'},
+      );
+
+      final data = response.data as Map<String, dynamic>?;
+      if (data != null && data.containsKey('error')) {
+        return data['error'].toString();
+      }
+
       await loadUsers();
       return null;
     } catch (e) {
