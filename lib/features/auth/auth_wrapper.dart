@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../home/home_page.dart';
 import 'login_page.dart';
-import 'register_page.dart';
 import '../../widgets/clay_button.dart';
 
 class AuthWrapper extends StatefulWidget {
@@ -14,7 +13,6 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-  bool _showRegister = false;
   Future<void>? _profileFuture;
 
   @override
@@ -26,9 +24,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       builder: (context, snapshot) {
         if (!auth.isLoggedIn) {
           _profileFuture = null;
-          return _showRegister
-              ? RegisterPage(onLoginTap: () => setState(() => _showRegister = false))
-              : LoginPage(onRegisterTap: () => setState(() => _showRegister = true));
+          return const LoginPage();
         }
 
         _profileFuture ??= auth.loadProfile();
@@ -46,6 +42,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red),
+                      const SizedBox(height: 8),
                       Text(auth.error ?? 'Gagal memuat profil'),
                       const SizedBox(height: 12),
                       ClayButton(

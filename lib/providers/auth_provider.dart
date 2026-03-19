@@ -28,18 +28,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> register(String email, String password) async {
-    _setLoading(true);
-    error = null;
-    try {
-      await _service.signUp(email: email, password: password);
-    } catch (e) {
-      error = e.toString();
-    } finally {
-      _setLoading(false);
-    }
-  }
-
   Future<void> loadProfile() async {
     final user = _service.currentUser;
     if (user == null) return;
@@ -65,6 +53,35 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<String?> createUser({
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'create-user',
+        body: {'email': email, 'password': password, 'role': role},
+      );
+
+      final data = response.data as Map<String, dynamic>?;
+      if (data != null && data.containsKey('error')) {
+        return data['error'].toString();
+      }
+
+      await loadUsers();
+      return null;
+    } on FunctionException catch (e) {
+      final body = e.details;
+      if (body is Map && body.containsKey('error')) {
+        return body['error'].toString();
+      }
+      return e.toString();
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
   Future<void> updateRole(String userId, String role) async {
     _setLoading(true);
     error = null;
@@ -75,6 +92,16 @@ class AuthProvider extends ChangeNotifier {
       error = e.toString();
     } finally {
       _setLoading(false);
+    }
+  }
+
+  Future<String?> deleteUser(String userId) async {
+    try {
+      await Supabase.instance.client.from('profiles').delete().eq('id', userId);
+      await loadUsers();
+      return null;
+    } catch (e) {
+      return e.toString();
     }
   }
 
