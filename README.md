@@ -144,9 +144,13 @@ Build APK:
 flutter build apk --release
 ```
 
+---
+
 ### Catatan Edge Function
 Setelah deploy `create-user`, pastikan **Verify JWT = OFF** di:
 Supabase Dashboard → Edge Functions → create-user → Settings.
+
+---
 
 ### Akun Demo
 
