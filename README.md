@@ -15,6 +15,11 @@ Prototype aplikasi Flutter untuk BangJun.
 2. Siapkan env:
    - Salin `assets/.env.example` menjadi `assets/.env`
    - Isi nilai `SUPABASE_URL` dan `SUPABASE_ANON_KEY`
+3. Setup database Supabase (1 file):
+   - Buat dulu user di Supabase Auth:
+     - `admin@bangjun.id`
+     - `kasir@bangjun.id`
+   - Jalankan `supabase/run_all.sql` di Supabase SQL Editor
 
 ## Menjalankan
 - Android: `flutter run` / `flutter build apk`
